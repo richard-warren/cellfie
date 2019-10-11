@@ -1,11 +1,19 @@
-# cell's kitchen (work in progress)
-neuron segmentation for calcium imaging. to be used as initialization for CalmAn
+# cellfie
 
-**stage 1 - region proposal**  
-identifies potential neuron locations using fully convolutional networks to segment neurons from background
+<a href="https://www.teepublic.com/tank-top/2147895-cell-fie"><img src="images/cellfie.png" align=right></a>
 
-**stage 2 - instance segmentation**  
-applies a segmentation network to subframes centered at maxima of segmentation from stage 1, yielding masks for individual neurons as well as confidence scores for each subframe
+`Cellfie` (**CELL** **FI** nd **E** r) automatically segments neurons in calcium imaging videos using fully convolutional neural networks.
 
-## instructions
-cell's kitchen is currently undergoing pretty major refactoring! documentation to follow when things have stabilized...
+Neuroscientists use [calcium imaging](https://en.wikipedia.org/wiki/Calcium_imaging) to monitor the activity of large populations of neurons in awake, behaving animals (like in [this](https://www.youtube.com/watch?v=Nxa19uWC_oA) beautiful example). However, calcium imaging can be super noisy, making neuron identification challenging. `Cellfie` solves this problem using a two stage neural network approach. First, a *region proposal* convolutional neural network identifies potential neurons. Next, an *instance segmentation* network iteratively identifies individual neurons.
+
+`Cellfie` is a work in progress. I'm collaborating with [Eftychios Pnevmatikakis](https://www.simonsfoundation.org/team/eftychios-a-pnevmatikakis/) at the Simon's Foundation to see if neural network segmentation can be combined with matrix factorization techniques (as used by [CaImAn](https://github.com/flatironinstitute/CaImAn/blob/master/README.md)) to maximize performance.
+
+
+#### region proposal
+todo
+
+#### instance segmentation
+todo
+
+#### putting it all together
+todo
