@@ -1,7 +1,7 @@
-from cells_kitchen import config as cfg
-from cells_kitchen.region_proposal.config import X_layers as rp_channels
-from cells_kitchen.instance_segmentation.config import X_layers as is_channels
-from cells_kitchen import utils
+from cellfie import config as cfg
+from cellfie.region_proposal.config import X_layers as rp_channels
+from cellfie.instance_segmentation.config import X_layers as is_channels
+from cellfie import utils
 import numpy as np
 from keras.models import load_model
 import skimage.measure
@@ -44,7 +44,7 @@ def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_dis
 
     # perform instance segmentation at each maximum
     print('%s: segmenting candidate neurons...' % dataset)
-    subframes, segmentations, scores = [], [], []
+    segmentations, scores = [], []
 
     for m in tqdm(maxima):
         position = (int(m.centroid[0] - sub_size[0] / 2),
@@ -55,7 +55,6 @@ def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_dis
         segmentation, score = model_is.predict(subframe[None,:,:,:])
         segmentations.append(segmentation.squeeze())
         scores.append(score[0][0])
-        subframes.append(utils.get_subimg(rp, position).squeeze())
 
     return rp, segmentations, scores, centroids, data_rp, data_is
 
@@ -83,13 +82,22 @@ def plot_data(dataset, rp_model_name, is_model_name, score_thresh=.2, maxima_thr
     bg = np.zeros((rp.shape[0] + 2 * sub_size[0], rp.shape[1] + 2 * sub_size[1], 3))
     cell_maps = []
 
+    # create neuron mask based on mean neuron
+    scaling = 1.5
+    mask = np.mean(segmentations, 0)
+    mask = skimage.transform.resize(mask, (sub_size[0]*scaling, sub_size[1]*scaling), mode='constant')
+    r, c = (round(mask.shape[d]/2-sub_size[d]/2) for d in (0, 1))
+    mask = mask[r:r+sub_size[0], c:c+sub_size[1]]
+    mask = mask - mask.min()
+    mask = mask / mask.max()
+
     for i, s in enumerate(tqdm(segmentations)):
         if scores[i] > score_thresh:
             r, c = int(centroids[i][0] - sub_size[0] / 2), int(centroids[i][1] - sub_size[1] / 2)
             cell_map = bg.copy()
-            s_temp = s
-            s_temp = np.repeat(s_temp[:, :, None], 3, 2)
-            cell_map[r + sub_size[0]:r + sub_size[0] * 2, c + sub_size[1]:c + sub_size[1] * 2] = s_temp
+            cell_seg = s.copy() * mask
+            cell_seg = np.repeat(cell_seg[:, :, None], 3, 2)
+            cell_map[r + sub_size[0]:r + sub_size[0] * 2, c + sub_size[1]:c + sub_size[1] * 2] = cell_seg
             color = cmap(np.random.rand())[:-1]
             cell_maps.append(cell_map * color)
 
@@ -114,16 +122,13 @@ def plot_data(dataset, rp_model_name, is_model_name, score_thresh=.2, maxima_thr
 ##
 
 # settings
-maxima_thresh = .3  # for finding local maxima in region proposals
+maxima_thresh = .1  # for finding local maxima in region proposals
 score_thresh = .3  # for instance segmentation classifier
 min_distance = 4
-rp_model_name = r'C:\Users\erica and rick\Desktop\cells_kitchen\models\region_proposal\191006_21.09.28\unet.92-0.355555.hdf5'
-is_model_name = r'C:\Users\erica and rick\Desktop\cells_kitchen\models\instance_segmentation\191008_18.56.30\segnet.221-0.275403.hdf5'
+rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\191010_15.42.38\unet.96-0.289488.hdf5'
+is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\191010_16.58.40\segnet.99-0.285416.hdf5'
 
 for d in cfg.datasets:
-    # try:
-        plot_data(d, rp_model_name, is_model_name,
-                  maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance)
-    # except:
-    #     print('%s: ANALYSIS FAILED! WTF!!!' % d)
+    plot_data(d, rp_model_name, is_model_name,
+              maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance)
 

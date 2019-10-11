@@ -8,7 +8,7 @@ import json
 import cv2
 import tifffile
 from PIL import Image, ImageDraw, ImageFont
-from cells_kitchen import config as cfg
+from cellfie import config as cfg
 from scipy import signal
 
 

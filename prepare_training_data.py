@@ -1,5 +1,5 @@
-from cells_kitchen import config as cfg
-from cells_kitchen import utils
+from cellfie import config as cfg
+from cellfie import utils
 import glob
 import numpy as np
 import os

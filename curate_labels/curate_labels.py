@@ -2,8 +2,8 @@
 after manually curating cells with this script run curate_regions to generate json files
 '''
 
-from cells_kitchen import config as cfg
-from cells_kitchen import utils
+from cellfie import config as cfg
+from cellfie import utils
 import os
 import numpy as np
 import sys

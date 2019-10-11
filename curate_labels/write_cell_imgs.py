@@ -1,5 +1,5 @@
-from cells_kitchen import config as cfg
-from cells_kitchen import utils
+from cellfie import config as cfg
+from cellfie import utils
 import os
 import numpy as np
 from tqdm import tqdm

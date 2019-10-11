@@ -1,7 +1,7 @@
 # network
 X_layers = ['corr', 'median', 'std']  # summary images to include as input to the network // ['corr', 'mean', 'median', 'max', 'std']
 subframe_size = (48, 48)  # 40, 48, 64
-filters = 8  # try 8, 16, 32
+filters = 16  # try 8, 16, 32
 
 # training
 # datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
@@ -22,5 +22,5 @@ losswise_api_key = '3ZGMSXASM'  # set to False if not using losswise.com
 batch_size = 64
 epoch_size = 4  # number of batches in an epoch
 training_epochs = 5000  # epochs
-early_stopping = training_epochs//10  # epochs
-save_predictions_during_training = True  # set whether to save images of predictions at each epoch end during training
+early_stopping = 100  # epochs
+save_predictions_during_training = False  # set whether to save images of predictions at each epoch end during training

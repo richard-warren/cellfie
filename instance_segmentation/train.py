@@ -1,6 +1,6 @@
-from cells_kitchen.config import data_dir
-from cells_kitchen.utils import save_prediction_img
-from cells_kitchen.instance_segmentation import config as cfg, data_generator as dg, models
+from cellfie.config import data_dir
+from cellfie.utils import save_prediction_img
+from cellfie.instance_segmentation import config as cfg, data_generator as dg, models
 from keras.models import load_model
 import tensorflow as tf
 import keras.backend as K

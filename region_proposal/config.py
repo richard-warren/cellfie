@@ -19,5 +19,5 @@ lr_init = .001
 batch_size = 16
 epoch_size = 4  # number of batches in an epoch
 training_epochs = 5000  # epochs
-early_stopping = training_epochs//10  # epochs
+early_stopping = 100  # epochs
 save_predictions_during_training = True  # set whether to save images of predictions at each epoch end during training

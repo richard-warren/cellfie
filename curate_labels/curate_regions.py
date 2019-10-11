@@ -2,7 +2,7 @@
 after choosing which cells to include (curate_labels.py), run this script to create new json file that include only the cells that were marked for inclusion
 '''
 
-from cells_kitchen import config as cfg
+from cellfie import config as cfg
 import os
 import pandas as pd
 import numpy as np

@@ -1,5 +1,5 @@
-from cells_kitchen.config import data_dir
-import cells_kitchen.region_proposal.config as cfg
+from cellfie.config import data_dir
+import cellfie.region_proposal.config as cfg
 from keras.utils import Sequence
 import numpy as np
 import pandas as pd
