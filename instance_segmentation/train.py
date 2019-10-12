@@ -17,6 +17,11 @@ if cfg.losswise_api_key:
     losswise.set_api_key(cfg.losswise_api_key)  # set up losswise.com visualization
 
 # create model data generators
+print('train datasets:')
+print(cfg.train_datasets)
+print('test datasets:')
+print(cfg.test_datasets)
+
 train_generator = dg.DataGenerator(
     cfg.train_datasets, batch_size=cfg.batch_size, subframe_size=cfg.subframe_size, epoch_size=cfg.epoch_size,
     rotation=cfg.aug_rotation, scaling=cfg.aug_scaling, fraction_positive_egs=cfg.fraction_positive_egs,

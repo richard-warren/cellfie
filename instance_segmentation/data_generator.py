@@ -5,8 +5,6 @@ from keras.utils import Sequence
 import numpy as np
 import pandas as pd
 import os
-import cv2
-import ipdb
 from scipy.ndimage.measurements import center_of_mass
 import cv2
 
@@ -73,9 +71,6 @@ class DataGenerator(Sequence):
                 scale = np.random.uniform(2 - self.scaling[1], 2 - self.scaling[0])  # the 2 minus is bc taking a BIGGER subframe results in a SMALLER resized subframe
             else:
                 scale = 1
-            dx = np.floor(self.subframe_size[1] * scale / 2).astype('uint8')  # dx and xy are half the width of subframe
-            dy = np.floor(self.subframe_size[0] * scale / 2).astype('uint8')
-
 
             # pick subframe center
             if is_neuron[i]:
@@ -88,7 +83,9 @@ class DataGenerator(Sequence):
                 center = self.data.negative_eg_inds[dataset_ind][ind]
 
             # get subframe
-            position = (center[0]-dy, center[1]-dx, self.subframe_size[0], self.subframe_size[1])
+            dx = np.floor(self.subframe_size[1] * scale / 2).astype('uint8')  # dx and xy are half the width of subframe
+            dy = np.floor(self.subframe_size[0] * scale / 2).astype('uint8')
+            position = (center[0]-dy, center[1]-dx, dx*2, dy*2)
             X_temp = utils.get_subimg(self.data.X[dataset_ind], position, padding='median_local')
 
             if is_neuron[i]:
@@ -100,18 +97,18 @@ class DataGenerator(Sequence):
                 X_temp = cv2.resize(X_temp, self.subframe_size)
                 y_temp = cv2.resize(y_temp.astype('uint8'), self.subframe_size).astype('bool')
 
+            # rotate
+            if self.rotation:
+                rotations = np.random.randint(0, 4)  # number of 90 degree rotations to perform
+                if rotations:
+                    X_temp = np.rot90(X_temp, rotations, axes=(0,1))
+                    y_temp = np.rot90(y_temp, rotations, axes=(0,1))
+
             X[i] = X_temp
             y[i] = y_temp
 
-        # rotate
-        if self.rotation:
-            rotations = np.random.randint(0, 4)  # number of 90 degree rotations to perform
-            if rotations:
-                X = np.rot90(X, rotations, axes=(1, 2))
-                y = np.rot90(y, rotations, axes=(1, 2))
-
         y = np.expand_dims(y, -1)  # a temporary hack because keras expects multiple output channels
-        return X, [y, is_neuron], [is_neuron, np.ones(is_neuron.shape)]  # third output are sample weights // use is_neuron for sample wiehgts for mask, bc we ignore negative examples in the mask backprop
+        return X, [y, is_neuron], [is_neuron, np.ones(is_neuron.shape)]  # third output are sample weights // use is_neuron for sample weights for mask, bc we ignore negative examples in the mask backprop
 
     def __len__(self):
         return self.epoch_size

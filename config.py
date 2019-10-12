@@ -8,7 +8,7 @@ dice loss function
 '''
 
 # general
-data_dir = r'C:\Users\erica and rick\Desktop\cells_kitchen'
+data_dir = r'C:\Users\erica and rick\Desktop\cellfie'
 parallelize = True  # whether to use parallel processing when creating summary images
 cores = 4  # how many CPU cores to use for parallel processes
 use_curated_labels = True

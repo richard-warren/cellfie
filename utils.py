@@ -27,7 +27,7 @@ def get_frames(folder, frame_inds=0, frame_num=False):
     return imgs
 
 
-def get_subimg(img_in, position, padding='mean'):
+def get_subimg(img_in, position, padding='median_local'):
     '''
     given an image and sub image position (row, col, height, width), where row and col are positions of top left corner,
     returns a cropped subframe // allows subframes to be requested that are out of the bounds of the image,

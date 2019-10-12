@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # settings
-summary_imgs_folder = r'C:\Users\erica and rick\Desktop\cells_kitchen\training_data\batch_250'
+summary_imgs_folder = r'C:\Users\erica and rick\Desktop\cellfie\training_data\batch_250'
 dataset = 'nf.01.00'
 channels = ['corr', 'median', 'std']
 contrast = [1, 99.9]

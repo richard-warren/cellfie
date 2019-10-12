@@ -9,7 +9,6 @@ import skimage.feature
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import os
-import ipdb as ipdb
 
 
 def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_distance=4):
@@ -22,12 +21,10 @@ def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_dis
     model_rp = load_model(rp_model_name)
     model_is = load_model(is_model_name)
     sub_size = model_is.input_shape[1:3]
-    print('%s: dimensions: (%i, %i)...' % (dataset, data_rp.shape[0], data_rp.shape[1]))
 
     # crop image if necessary
     row = data_rp.shape[0] // 16 * 16 if (data_rp.shape[0]/16)%2 != 0 else data_rp.shape[0]
     col = data_rp.shape[1] // 16 * 16 if (data_rp.shape[1] / 16) % 2 != 0 else data_rp.shape[1]
-
     if (row, col) != data_rp.shape:
         print('%s: cropping to dimensions: (%i, %i)...' % (dataset, row, col))
         data_rp = data_rp[:row, :col]
@@ -51,7 +48,7 @@ def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_dis
                     int(m.centroid[1] - sub_size[1] / 2),
                     sub_size[0],
                     sub_size[1])
-        subframe = utils.get_subimg(data_is, position)
+        subframe = utils.get_subimg(data_is, position, padding='median_local')
         segmentation, score = model_is.predict(subframe[None,:,:,:])
         segmentations.append(segmentation.squeeze())
         scores.append(score[0][0])
@@ -60,7 +57,8 @@ def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_dis
 
 
 
-def plot_data(dataset, rp_model_name, is_model_name, score_thresh=.2, maxima_thresh=.2, min_distance=4):
+def plot_data(dataset, rp_model_name, is_model_name,
+              score_thresh=.2, maxima_thresh=.2, min_distance=4, use_mask=False):
 
     # run network
     rp, segmentations, scores, centroids, data_rp, data_is = \
@@ -83,13 +81,16 @@ def plot_data(dataset, rp_model_name, is_model_name, score_thresh=.2, maxima_thr
     cell_maps = []
 
     # create neuron mask based on mean neuron
-    scaling = 1.5
-    mask = np.mean(segmentations, 0)
-    mask = skimage.transform.resize(mask, (sub_size[0]*scaling, sub_size[1]*scaling), mode='constant')
-    r, c = (round(mask.shape[d]/2-sub_size[d]/2) for d in (0, 1))
-    mask = mask[r:r+sub_size[0], c:c+sub_size[1]]
-    mask = mask - mask.min()
-    mask = mask / mask.max()
+    if use_mask:
+        scaling = 1.25
+        mask = np.mean(segmentations, 0)
+        mask = skimage.transform.resize(mask, (sub_size[0]*scaling, sub_size[1]*scaling), mode='constant')
+        r, c = (round(mask.shape[d]/2-sub_size[d]/2) for d in (0, 1))
+        mask = mask[r:r+sub_size[0], c:c+sub_size[1]]
+        mask = mask - mask.min()
+        mask = mask / mask.max()
+    else:
+        mask = np.ones(sub_size)
 
     for i, s in enumerate(tqdm(segmentations)):
         if scores[i] > score_thresh:
@@ -105,7 +106,7 @@ def plot_data(dataset, rp_model_name, is_model_name, score_thresh=.2, maxima_thr
     img = img[sub_size[0]:sub_size[0] + rp.shape[0], sub_size[1]:sub_size[1] + rp.shape[1]]
     y = utils.get_targets(os.path.join(cfg.data_dir, 'labels', dataset),
                     border_thickness=1, collapse_masks=True, use_curated_labels=True)['borders']
-    if y.shape!=img.shape:  # trim labels if input to network was also trimmed
+    if y.shape != img.shape:  # trim labels if input to network was also trimmed
         y = y[:img.shape[0], :img.shape[1]]
     img = utils.add_contours(img, y)  # add ground truth cell borders
     ax[0,1].imshow(img)
@@ -122,13 +123,17 @@ def plot_data(dataset, rp_model_name, is_model_name, score_thresh=.2, maxima_thr
 ##
 
 # settings
-maxima_thresh = .1  # for finding local maxima in region proposals
+maxima_thresh = .2  # for finding local maxima in region proposals
 score_thresh = .3  # for instance segmentation classifier
 min_distance = 4
-rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\191010_15.42.38\unet.96-0.289488.hdf5'
-is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\191010_16.58.40\segnet.99-0.285416.hdf5'
+use_mask = False
+
+rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\train_test_same\unet.988-0.124001.hdf5'  # train test same
+
+# is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fair_split\segnet.54-0.362665.hdf5'  # fair split
+is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\train_test_same\segnet.96-0.265353.hdf5'  # train test same
 
 for d in cfg.datasets:
     plot_data(d, rp_model_name, is_model_name,
-              maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance)
+              maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance, use_mask=use_mask)
 
