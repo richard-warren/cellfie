@@ -21,7 +21,6 @@ output_folder = 'images'
 rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\train_test_same\unet.988-0.124001.hdf5'  # train test same
 is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame\segnet.96-0.265353.hdf5'  # train test same
 maxima_thresh = .1  # for finding local maxima in region proposals
-score_thresh = .3  # for instance segmentation classifier
 min_distance = 4
 
 
@@ -56,24 +55,19 @@ def save_inout_img(input, output, file_name, hgt_out=300, separation=.2, stack_s
     img = Image.fromarray((rp_sample*255).astype('uint8'))
     img.save(file_name)
 
-# ##
-# def add_box(img, position, color=(1,0,0), thickness=3):
-#     r, c = max(position[0], 0), max(position[1], 0)
-#
 
+## make region proposal and instance segmentation sample images
 
-## make sample image
-
-# settings
 cells = [21, 22, 28]
-
 save_inout_img(data_rp, rp, os.path.join(output_folder, 'rp_sample_noarrow.png'))
 for cell in cells:
     save_inout_img(subframes[cell], segmentations[cell], os.path.join(output_folder, 'is_sample%i.png'%cell),
                    hgt_out = int(rp.shape[0]/len(cells)), separation=.5)
 
 
-## make sick gif!
+## make images for gif
+
+score_thresh = .3  # for instance segmentation classifier
 
 # create blank image to start
 final_hgt = 300
@@ -90,11 +84,11 @@ mask = mask[r:r+sub_size[0], c:c+sub_size[1]]
 mask = mask - mask.min()
 mask = mask / mask.max()
 
-num_neurons = len(segmentations)
 prev_map = bg
 count = 0
 input = data_rp[:,:,0]
 input = np.repeat(input[:,:,None],3,2)  # add color dimension
+num_neurons = len(segmentations)
 
 for i in tqdm(range(num_neurons)):
     if scores[i] > score_thresh:
@@ -119,15 +113,22 @@ for i in tqdm(range(num_neurons)):
         img = np.array([prev_map, cell_map]).max(0)
         prev_map = img
         img = img[sub_size[0]:sub_size[0] + rp.shape[0], sub_size[1]:sub_size[1] + rp.shape[1]]
-        img = np.concatenate((input, rp_img, img), axis=1)
+        weights = np.repeat(img.max(2)[:,:,None],3,2)
+
+        input_temp = input.copy()
+        input_temp = utils.scale_img(input_temp*img + (1-weights)*input_temp)
+
+        img = np.concatenate((input_temp, rp_img, img), axis=1)
         img = rescale(img, (final_hgt/img.shape[0]), mode='constant')
         img = Image.fromarray((img * 255).astype('uint8'))
         img.save(os.path.join(output_folder, 'gif_imgs', 'img%04d.png' % count))
         count += 1
 
 
-
-
+##
+ax.clear()
+new = input*img + (1-input)*input
+plt.imshow(new)
 
 
 
