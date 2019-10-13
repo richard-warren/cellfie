@@ -92,17 +92,19 @@ mask = mask / mask.max()
 num_neurons = len(segmentations)
 prev_map = bg
 count = 0
+input = data_rp[:,:,0]
+input = np.repeat(input[:,:,None],3,2)  # add color dimension
 
 for i in tqdm(range(num_neurons)):
     if scores[i] > score_thresh:
 
         # get input image and highlight subframe
         r, c = int(centroids[i][0] - sub_size[0] / 2), int(centroids[i][1] - sub_size[1] / 2)
-        input = data_rp[:,:,0]
-        input = np.repeat(input[:,:,None],3,2)  # add color dimension
-        input_mask = np.ones(input.shape) * .3
-        input_mask[max(0, r) : min(r+sub_size[0], input.shape[0]), max(0, c) : min(c+sub_size[1], input.shape[1])] = 1
-        input = input * input_mask
+        rp_img = rp.copy()
+        rp_img = np.repeat(rp_img[:,:,None],3,2)  # add color dimension
+        rp_mask = np.ones(rp_img.shape) * .3
+        rp_mask[max(0, r) : min(r+sub_size[0], rp_img.shape[0]), max(0, c) : min(c+sub_size[1], rp_img.shape[1])] = 1
+        rp_img = rp_img * rp_mask
 
         # add next colored segmentation
         cell_map = bg.copy()
@@ -116,7 +118,7 @@ for i in tqdm(range(num_neurons)):
         img = np.array([prev_map, cell_map]).max(0)
         prev_map = img
         img = img[sub_size[0]:sub_size[0] + rp.shape[0], sub_size[1]:sub_size[1] + rp.shape[1]]
-        img = np.concatenate((input, img), axis=1)
+        img = np.concatenate((input, rp_img, img), axis=1)
         img = Image.fromarray((img * 255).astype('uint8'))
         img.save(os.path.join(output_folder, 'gif_imgs', 'img%04d.png' % count))
         count += 1
