@@ -8,7 +8,7 @@
 
 Neuroscientists use [calcium imaging](https://en.wikipedia.org/wiki/Calcium_imaging) to monitor the activity of large populations of neurons in awake, behaving animals (like in [this](https://www.youtube.com/watch?v=Nxa19uWC_oA) beautiful example). However, calcium imaging can be very noisy, making neuron identification challenging. `cellfie` addresses this problem using a two stage convolutional neural network approach. First, a *region proposal* network identifies potential neurons. Next, an *instance segmentation* network iteratively identifies individual neurons.
 
-`cellfie` is under active development. I'm collaborating with [Eftychios Pnevmatikakis](https://www.simonsfoundation.org/team/eftychios-a-pnevmatikakis/) at the Simon's Foundation to see if neural networks combined with matrix factorization techniques (as used by [CaImAn](https://github.com/flatironinstitute/CaImAn/blob/master/README.md)) outperform current approaches to calcium imaging segmentation. The datasets used to train `cellfie` were meticulously created by Eftychios and his team.
+`cellfie` is under active development. I'm collaborating with [Eftychios Pnevmatikakis](https://www.simonsfoundation.org/team/eftychios-a-pnevmatikakis/) at the Simon's Foundation to see if neural networks combined with matrix factorization techniques (as used by [CaImAn](https://github.com/flatironinstitute/CaImAn/blob/master/README.md)) outperforms current approaches to calcium imaging segmentation. The datasets used to train `cellfie` were meticulously created by Eftychios and his team.
 </br></br>
 
 
