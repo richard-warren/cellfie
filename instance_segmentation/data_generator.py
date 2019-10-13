@@ -17,7 +17,7 @@ class DataGenerator(Sequence):
     '''
 
     def __init__(self, datasets, batch_size=8, subframe_size=(40, 40), epoch_size=64, rotation=True, scaling=(1, 1),
-                 fraction_positive_egs=.5, jitter=2, negative_eg_distance=8):
+                 fraction_positive_egs=.5, jitter=2, negative_eg_distance=8, backprop_negative_masks=False):
 
         # initialization
         self.datasets = datasets
@@ -29,6 +29,7 @@ class DataGenerator(Sequence):
         self.fraction_positive_egs = fraction_positive_egs
         self.jitter = jitter
         self.negative_eg_distance = negative_eg_distance
+        self.backprop_negative_masks = backprop_negative_masks
 
         # load features and labels into DataFrame
         self.data = pd.DataFrame(index=datasets, columns=['X', 'y', 'negative_eg_inds'])
@@ -108,7 +109,9 @@ class DataGenerator(Sequence):
             y[i] = y_temp
 
         y = np.expand_dims(y, -1)  # a temporary hack because keras expects multiple output channels
-        return X, [y, is_neuron], [is_neuron, np.ones(is_neuron.shape)]  # third output are sample weights // use is_neuron for sample weights for mask, bc we ignore negative examples in the mask backprop
+        weights = [np.ones(is_neuron.shape), np.ones(is_neuron.shape)] if self.backprop_negative_masks else [is_neuron, np.ones(is_neuron.shape)]
+
+        return X, [y, is_neuron], weights  # third output are sample weights // use is_neuron for sample weights for mask, bc we ignore negative examples in the mask backprop
 
     def __len__(self):
         return self.epoch_size

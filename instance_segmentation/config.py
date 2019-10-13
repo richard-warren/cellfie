@@ -6,12 +6,12 @@ filters = 8  # try 8, 16, 32
 # training
 
 # fair split
-# train_datasets = ['N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01']
-# test_datasets = ['N.00.00', 'YST', 'nf.04.01']
+train_datasets = ['N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01']
+test_datasets = ['N.00.00', 'YST', 'nf.04.01']
 
 # equal test and train
-train_datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
-test_datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+# train_datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+# test_datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
 
 # accidental split that may have worked
 # train_datasets = ['N.00.00', 'YST', 'nf.04.01']
@@ -33,3 +33,4 @@ epoch_size = 4  # number of batches in an epoch
 training_epochs = 5000  # epochs
 early_stopping = 200  # epochs
 save_predictions_during_training = True  # set whether to save images of predictions at each epoch end during training
+backprop_negative_masks = True  # whether to include negative examples in the backprop for segmentation

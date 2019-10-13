@@ -25,11 +25,11 @@ print(cfg.test_datasets)
 train_generator = dg.DataGenerator(
     cfg.train_datasets, batch_size=cfg.batch_size, subframe_size=cfg.subframe_size, epoch_size=cfg.epoch_size,
     rotation=cfg.aug_rotation, scaling=cfg.aug_scaling, fraction_positive_egs=cfg.fraction_positive_egs,
-    jitter=cfg.jitter, negative_eg_distance=cfg.negative_eg_distance)
+    jitter=cfg.jitter, negative_eg_distance=cfg.negative_eg_distance, backprop_negative_masks=cfg.backprop_negative_masks)
 test_generator = dg.DataGenerator(
     cfg.test_datasets, batch_size=cfg.batch_size, subframe_size=cfg.subframe_size, epoch_size=cfg.epoch_size,
     rotation=cfg.aug_rotation, scaling=cfg.aug_scaling, fraction_positive_egs=cfg.fraction_positive_egs,
-    jitter=cfg.jitter, negative_eg_distance=cfg.negative_eg_distance)
+    jitter=cfg.jitter, negative_eg_distance=cfg.negative_eg_distance, backprop_negative_masks=cfg.backprop_negative_masks)
 
 # create model
 input_shape = (cfg.subframe_size[0], cfg.subframe_size[1], train_generator.shape_X[-1])
