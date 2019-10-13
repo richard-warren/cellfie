@@ -10,7 +10,7 @@ Neuroscientists use [calcium imaging](https://en.wikipedia.org/wiki/Calcium_imag
 
 
 #### region proposal
-<img src="images/rp_sample.png" align="center">
+<p align="center"><img src="images/rp_sample.png"></p>
 
 First, a *region proposal* network segments all neurons and the background. Rather than passing entire videos into the network (which can be gigabytes of data!), three summary images are created that collapse the videos across time:
 
@@ -21,7 +21,7 @@ First, a *region proposal* network segments all neurons and the background. Rath
 I use a [U-Net](https://arxiv.org/abs/1505.04597)-style fully convolutional neuronal network that takes these summary images as input and produces a probability map where each pixel represents the probability that the pixel belongs to a neuron.</br>
 
 #### instance segmentation
-<img src="images/is_sample.png" align="right">
+<p align="center"><img src="images/is_sample.png"></p>
 But how can we find *individual* neurons? I train a second *instance segmentation* network that takes small subframes within the summary images as input. This network outputs:
 
 1. a segmentation of the neuron centered within the current subframes (omitting other neurons in the frame!)
