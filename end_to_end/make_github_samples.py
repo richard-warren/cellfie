@@ -2,21 +2,17 @@
 make sample images for the github repo readme
 '''
 
-from cellfie import config as cfg
 from cellfie import utils
+from cellfie.end_to_end.end_to_end import segment
 import numpy as np
-from keras.models import load_model
-import skimage.measure
-import skimage.feature
-from tqdm import tqdm
 from PIL import Image
 from skimage.transform import resize, rescale
-import matplotlib.pyplot as plt
 import os
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import skimage.draw
 
-
-
-## initializations
+# SEGMENT DATASET
 
 # settings
 dataset = 'K53'
@@ -29,43 +25,10 @@ score_thresh = .3  # for instance segmentation classifier
 min_distance = 4
 
 
-print('%s: loading data and models...' % dataset)
-data = np.load(os.path.join(cfg.data_dir, 'training_data', dataset+'.npz'), allow_pickle=True)['X'][()]
-data = np.stack([data[k] for k in channels], axis=-1)
-model_rp = load_model(rp_model_name)
-model_is = load_model(is_model_name)
-sub_size = model_is.input_shape[1:3]
+rp, segmentations, scores, centroids, data_rp, data_is, subframes = \
+segment(dataset, rp_model_name, is_model_name, channels, channels,
+    min_distance=min_distance, maxima_thresh=maxima_thresh)
 
-# crop image if necessary
-row = data.shape[0] // 16 * 16 if (data.shape[0]/16)%2 != 0 else data.shape[0]
-col = data.shape[1] // 16 * 16 if (data.shape[1] / 16) % 2 != 0 else data.shape[1]
-if (row, col) != data.shape:
-    print('%s: cropping to dimensions: (%i, %i)...' % (dataset, row, col))
-    data_rp = data[:row, :col]
-
-# get region proposals
-print('%s: getting region proposals...' % dataset)
-rp = model_rp.predict(np.expand_dims(data_rp, 0)).squeeze()
-maxima = skimage.feature.peak_local_max(
-    rp, min_distance=min_distance, threshold_abs=maxima_thresh, indices=False)
-maxima = skimage.measure.label(maxima, 8)
-maxima = skimage.measure.regionprops(maxima)
-centroids = np.array([m.centroid for m in maxima])
-
-# perform instance segmentation at each maximum
-print('%s: segmenting candidate neurons...' % dataset)
-segmentations, scores, subframes = [], [], []
-
-for m in tqdm(maxima):
-    position = (int(m.centroid[0] - sub_size[0] / 2),
-                int(m.centroid[1] - sub_size[1] / 2),
-                sub_size[0],
-                sub_size[1])
-    subframe = utils.get_subimg(data, position, padding='median_local')
-    segmentation, score = model_is.predict(subframe[None,:,:,:])
-    segmentations.append(segmentation.squeeze())
-    scores.append(score[0][0])
-    subframes.append(subframe)
 
 # stacks images, where dim 2 is the image dimension, and 0,1 are row, col dimensions
 def stack_images(imgs, offset, contrast=(0,99)):
@@ -77,14 +40,7 @@ def stack_images(imgs, offset, contrast=(0,99)):
 
     return stack
 
-
-
-
-## make sample image
-
-# settings
-cells = [21, 22, 28]
-
+# saves images with input images stacked on left, and output image on right
 def save_inout_img(input, output, file_name, hgt_out=300, separation=.2, stack_separation=.1):
 
     stack = stack_images(input, int(output.shape[0]*stack_separation))
@@ -100,13 +56,71 @@ def save_inout_img(input, output, file_name, hgt_out=300, separation=.2, stack_s
     img = Image.fromarray((rp_sample*255).astype('uint8'))
     img.save(file_name)
 
-save_inout_img(data, rp, os.path.join(output_folder, 'rp_sample_noarrow.png'))
+# ##
+# def add_box(img, position, color=(1,0,0), thickness=3):
+#     r, c = max(position[0], 0), max(position[1], 0)
+#
+
+
+## make sample image
+
+# settings
+cells = [21, 22, 28]
+
+save_inout_img(data_rp, rp, os.path.join(output_folder, 'rp_sample_noarrow.png'))
 for cell in cells:
     save_inout_img(subframes[cell], segmentations[cell], os.path.join(output_folder, 'is_sample%i.png'%cell),
                    hgt_out = int(rp.shape[0]/len(cells)), separation=.5)
 
 
-## save output images
+## make sick gif!
+
+# create blank image to start
+sub_size = segmentations[0].shape
+bg = np.zeros((data_rp.shape[0] + 2 * sub_size[0], rp.shape[1] + 2 * sub_size[1], 3))
+cmap = plt.get_cmap('gist_rainbow')
+
+# create neuron mask
+scaling = 1.5
+mask = np.mean(segmentations, 0)
+mask = resize(mask, (sub_size[0]*scaling, sub_size[1]*scaling), mode='constant')
+r, c = (round(mask.shape[d]/2-sub_size[d]/2) for d in (0, 1))
+mask = mask[r:r+sub_size[0], c:c+sub_size[1]]
+mask = mask - mask.min()
+mask = mask / mask.max()
+
+num_neurons = len(segmentations)
+prev_map = bg
+count = 0
+
+for i in tqdm(range(num_neurons)):
+    if scores[i] > score_thresh:
+
+        # get input image and highlight subframe
+        r, c = int(centroids[i][0] - sub_size[0] / 2), int(centroids[i][1] - sub_size[1] / 2)
+        input = data_rp[:,:,0]
+        input = np.repeat(input[:,:,None],3,2)  # add color dimension
+        input_mask = np.ones(input.shape) * .3
+        input_mask[max(0, r) : min(r+sub_size[0], input.shape[0]), max(0, c) : min(c+sub_size[1], input.shape[1])] = 1
+        input = input * input_mask
+
+        # add next colored segmentation
+        cell_map = bg.copy()
+        cell_seg = segmentations[i].copy() * mask
+        cell_seg = np.repeat(cell_seg[:, :, None], 3, 2)
+        cell_map[r + sub_size[0]:r + sub_size[0] * 2, c + sub_size[1]:c + sub_size[1] * 2] = cell_seg
+        color = cmap(np.random.rand())[:-1]
+        cell_map = cell_map * color
+
+        # save current image
+        img = np.array([prev_map, cell_map]).max(0)
+        prev_map = img
+        img = img[sub_size[0]:sub_size[0] + rp.shape[0], sub_size[1]:sub_size[1] + rp.shape[1]]
+        img = np.concatenate((input, img), axis=1)
+        img = Image.fromarray((img * 255).astype('uint8'))
+        img.save(os.path.join(output_folder, 'gif_imgs', 'img%04d.png' % count))
+        count += 1
+
 
 
 

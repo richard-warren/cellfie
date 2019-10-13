@@ -1,6 +1,4 @@
 from cellfie import config as cfg
-from cellfie.region_proposal.config import X_layers as rp_channels
-from cellfie.instance_segmentation.config import X_layers as is_channels
 from cellfie import utils
 import numpy as np
 from keras.models import load_model
@@ -11,8 +9,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-
-def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_distance=4):
+def segment(dataset, rp_model_name, is_model_name, rp_channels, is_channels, maxima_thresh=.2, min_distance=4):
 
     # load data and models
     print('%s: loading data and models...' % dataset)
@@ -53,18 +50,19 @@ def run_network(dataset, rp_model_name, is_model_name, maxima_thresh=.2, min_dis
         segmentation, score = model_is.predict(subframe[None,:,:,:])
         segmentations.append(segmentation.squeeze())
         scores.append(score[0][0])
-        subframes.append(subframe[:,:,0])
+        subframes.append(subframe)
 
     return rp, segmentations, scores, centroids, data_rp, data_is, subframes
 
 
 
-def plot_data(dataset, rp_model_name, is_model_name,
+def plot_data(dataset, rp_model_name, is_model_name, rp_channels, is_channels,
               score_thresh=.2, maxima_thresh=.2, min_distance=4, use_mask=False, add_ground_truth=True):
 
     # run network
     rp, segmentations, scores, centroids, data_rp, data_is, subframes = \
-        run_network(dataset, rp_model_name, is_model_name, min_distance=min_distance, maxima_thresh=maxima_thresh)
+        segment(dataset, rp_model_name, is_model_name, rp_channels, is_channels,
+                min_distance=min_distance, maxima_thresh=maxima_thresh)
 
     fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(9, 9))
 
@@ -131,23 +129,23 @@ def plot_data(dataset, rp_model_name, is_model_name,
     plt.savefig(os.path.join(cfg.data_dir, 'results', 'e2e_figs', dataset+'.png'))
 
 
-##
+## the following code should be made into it's own script
 
-# settings
-maxima_thresh = .1  # for finding local maxima in region proposals
-score_thresh = .3  # for instance segmentation classifier
-min_distance = 4
-use_mask = True
-add_ground_truth = True
-
-rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\train_test_same\unet.988-0.124001.hdf5'  # train test same
-
-# is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fairsplit\segnet.54-0.362665.hdf5'  # fair split
-is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame\segnet.96-0.265353.hdf5'  # train test same
-# is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame_noweights\segnet.94-0.217348.hdf5'  # train test same, no mask weights
-# is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fairsplit_noweights\segnet.97-0.370941.hdf5'  # fair split, no mask weights
-
-for d in cfg.datasets:
-    plot_data(d, rp_model_name, is_model_name, add_ground_truth=add_ground_truth,
-              maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance, use_mask=use_mask)
-
+# # settings
+# maxima_thresh = .1  # for finding local maxima in region proposals
+# score_thresh = .3  # for instance segmentation classifier
+# min_distance = 4
+# use_mask = True
+# add_ground_truth = True
+#
+# rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\train_test_same\unet.988-0.124001.hdf5'  # train test same
+#
+# # is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fairsplit\segnet.54-0.362665.hdf5'  # fair split
+# is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame\segnet.96-0.265353.hdf5'  # train test same
+# # is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame_noweights\segnet.94-0.217348.hdf5'  # train test same, no mask weights
+# # is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fairsplit_noweights\segnet.97-0.370941.hdf5'  # fair split, no mask weights
+#
+# for d in cfg.datasets:
+#     plot_data(d, rp_model_name, is_model_name, add_ground_truth=add_ground_truth,
+#               maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance, use_mask=use_mask)
+#
