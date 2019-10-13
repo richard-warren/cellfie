@@ -41,5 +41,5 @@ Putting together the region proposal and instance segmentation networks allows u
 #### notes
 
 * This work is inspired by [DeepMask](https://arxiv.org/abs/1506.06204), which presents a really neat approach to instance segmentation.
-* The `cellfie` cartoon was borrowed from [this](https://www.teepublic.com/tank-top/2147895-cell-fie"><img src="images/cellfie.png) website.
+* The `cellfie` cartoon was borrowed from [this](https://www.teepublic.com/tank-top/2147895-cell-fie) website.
 * `cellfie` is under active development. If you are interested in trying `cellfie` on your data, please let me know.
