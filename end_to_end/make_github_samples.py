@@ -10,6 +10,7 @@ import skimage.measure
 import skimage.feature
 from tqdm import tqdm
 from PIL import Image
+from skimage.transform import resize, rescale
 import matplotlib.pyplot as plt
 import os
 
@@ -64,7 +65,7 @@ for m in tqdm(maxima):
     segmentation, score = model_is.predict(subframe[None,:,:,:])
     segmentations.append(segmentation.squeeze())
     scores.append(score[0][0])
-    subframes.append(subframe[:,:,0])
+    subframes.append(subframe)
 
 # stacks images, where dim 2 is the image dimension, and 0,1 are row, col dimensions
 def stack_images(imgs, offset, contrast=(0,99)):
@@ -79,17 +80,33 @@ def stack_images(imgs, offset, contrast=(0,99)):
 
 
 
-## region proposal
+## make sample image
 
-stack = stack_images(data, 80)
-img = Image.fromarray((stack*255).astype('uint8'))
-img.save(os.path.join(output_folder, 'rp', 'rp_input.png'))
+# settings
+cells = [21, 22, 28]
 
-img = Image.fromarray((rp*255).astype('uint8'))
-img.save(os.path.join(output_folder, 'rp', 'rp_output.png'))
+def save_inout_img(input, output, file_name, hgt_out=300, separation=.2, stack_separation=.1):
 
-## instance segmentation
+    stack = stack_images(input, int(output.shape[0]*stack_separation))
+    hgt, wid = stack.shape[0], int(stack.shape[1] * (2+separation))
+    output = resize(output.copy(), (hgt, int(output.shape[0]*(hgt/output.shape[0]))), mode='constant', cval=1)
+    output = utils.enhance_contrast(output, [5, 99])
 
+    rp_sample = np.ones((hgt, wid))
+    rp_sample[:, :stack.shape[1]] = stack
+    rp_sample[:, -output.shape[1]:] = output
+    rp_sample = rescale(rp_sample, (hgt_out/hgt), mode='constant', cval=1)
+
+    img = Image.fromarray((rp_sample*255).astype('uint8'))
+    img.save(file_name)
+
+save_inout_img(data, rp, os.path.join(output_folder, 'rp_sample_noarrow.png'))
+for cell in cells:
+    save_inout_img(subframes[cell], segmentations[cell], os.path.join(output_folder, 'is_sample%i.png'%cell),
+                   hgt_out = int(rp.shape[0]/len(cells)), separation=.5)
+
+
+## save output images
 
 
 

@@ -6,11 +6,11 @@
 
 Neuroscientists use [calcium imaging](https://en.wikipedia.org/wiki/Calcium_imaging) to monitor the activity of large populations of neurons in awake, behaving animals (like in [this](https://www.youtube.com/watch?v=Nxa19uWC_oA) beautiful example). However, calcium imaging can be very noisy, making neuron identification challenging. `cellfie` solves this problem using a two stage convolutional neural network approach. First, a *region proposal* network identifies potential neurons. Next, an *instance segmentation* network iteratively identifies individual neurons.
 
-`cellfie` is a work in progress. I'm collaborating with [Eftychios Pnevmatikakis](https://www.simonsfoundation.org/team/eftychios-a-pnevmatikakis/) at the Simon's Foundation to see if neural networks combined with matrix factorization techniques (as used by [CaImAn](https://github.com/flatironinstitute/CaImAn/blob/master/README.md)) outperform current approaches to calcium imaging segmentation.
+`cellfie` is a work in progress. I'm collaborating with [Eftychios Pnevmatikakis](https://www.simonsfoundation.org/team/eftychios-a-pnevmatikakis/) at the Simon's Foundation to see if neural networks combined with matrix factorization techniques (as used by [CaImAn](https://github.com/flatironinstitute/CaImAn/blob/master/README.md)) outperform current approaches to calcium imaging segmentation.<br/><br/>
 
 
 #### region proposal
-![](images/rp/rp_schematic.png)
+<img src="images/rp_sample.png" align="center">
 
 First, a *region proposal* network segments all neurons and the background. Rather than passing entire videos into the network (which can be gigabytes of data!), three summary images are created that collapse the videos across time:
 
@@ -18,9 +18,10 @@ First, a *region proposal* network segments all neurons and the background. Rath
 2. *standard deviation images* that capture the variability of each pixel. Pixels belonging to neurons will have higher variability due to fluctuations in neural activity.
 3. *median images*
 
-I use a [U-Net](https://arxiv.org/abs/1505.04597)-style fully convolutional neuronal network that takes these summary images as input and produces a probability map where each pixel represents the probability that the pixel belongs to a neuron.
+I use a [U-Net](https://arxiv.org/abs/1505.04597)-style fully convolutional neuronal network that takes these summary images as input and produces a probability map where each pixel represents the probability that the pixel belongs to a neuron.</br>
 
 #### instance segmentation
+<img src="images/is_sample.png" align="right">
 But how can we find *individual* neurons? I train a second *instance segmentation* network that takes small subframes within the summary images as input. This network outputs:
 
 1. a segmentation of the neuron centered within the current subframes (omitting other neurons in the frame!)
