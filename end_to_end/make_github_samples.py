@@ -76,6 +76,7 @@ for cell in cells:
 ## make sick gif!
 
 # create blank image to start
+final_hgt = 300
 sub_size = segmentations[0].shape
 bg = np.zeros((data_rp.shape[0] + 2 * sub_size[0], rp.shape[1] + 2 * sub_size[1], 3))
 cmap = plt.get_cmap('gist_rainbow')
@@ -119,6 +120,7 @@ for i in tqdm(range(num_neurons)):
         prev_map = img
         img = img[sub_size[0]:sub_size[0] + rp.shape[0], sub_size[1]:sub_size[1] + rp.shape[1]]
         img = np.concatenate((input, rp_img, img), axis=1)
+        img = rescale(img, (final_hgt/img.shape[0]), mode='constant')
         img = Image.fromarray((img * 255).astype('uint8'))
         img.save(os.path.join(output_folder, 'gif_imgs', 'img%04d.png' % count))
         count += 1
