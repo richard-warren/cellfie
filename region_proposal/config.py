@@ -12,8 +12,8 @@ filters = 16  # numbers of filters in first layer of network // scales up as net
 # test_datasets = ['N.00.00', 'YST', 'nf.04.01']
 
 # equal test and train
-train_datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
-test_datasets = ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+train_datasets = ['YST', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+test_datasets = ['YST', 'nf.01.00', 'nf.02.01', 'nf.04.01']
 
 # accidental split that may have worked
 # test_datasets = ['N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01']

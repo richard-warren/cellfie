@@ -1,9 +1,7 @@
 import glob
 import os
 import numpy as np
-from tqdm import tqdm
 from scipy.ndimage import convolve
-import matplotlib.pyplot as plt
 import json
 import cv2
 import tifffile
@@ -140,8 +138,8 @@ def get_targets(folder, collapse_masks=False, centroid_radius=2, border_thicknes
 
     for i, cell in enumerate(cell_masks):
         masks_soma[i, cell[:, 0], cell[:, 1]] = True
-        _, contour, _ = cv2.findContours(masks_soma[i].astype('uint8'), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        masks_border[i] = cv2.drawContours(np.zeros(dimensions), contour, 0, 1, thickness=border_thickness).astype('bool')
+        # _, contour, _ = cv2.findContours(masks_soma[i].astype('uint8'), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        # masks_border[i] = cv2.drawContours(np.zeros(dimensions), contour, 0, 1, thickness=border_thickness).astype('bool')
         center = np.mean(cell, 0).astype('int')
         masks_centroids[i] = cv2.circle(masks_centroids[i].astype('uint8'), (center[1], center[0]), centroid_radius, 1, thickness=-1)
 
@@ -215,7 +213,7 @@ def save_prediction_img(file, X, y, y_pred=None, height=800, X_contrast=(0,100),
     img = Image.fromarray((cat * 255).astype('uint8'))
 
     if column_titles is not None:
-        font = ImageFont.truetype("arial.ttf", 20)
+        font = ImageFont.truetype("FreeSansBold.ttf", 20)
         img_draw = ImageDraw.Draw(img)
         for i, t in enumerate(column_titles):
             img_draw.text((X.shape[1] * i, 0), t, fill=255, font=font)
@@ -231,7 +229,7 @@ def write_sample_imgs(X_contrast=(0,100)):
     files = glob.glob(os.path.join(cfg.data_dir, 'training_data', '*.npz'))
 
     for f in files:
-        data = np.load(f)
+        data = np.load(f, allow_pickle=True)
         X_mat = np.stack(data['X'][()].values(), axis=2)
         y_mat = np.stack(data['y'][()].values(), axis=2)
         file_name = os.path.join(cfg.data_dir, 'training_data', os.path.splitext(f)[0] + '.png')
@@ -247,7 +245,7 @@ def write_sample_border_imgs(channels=['corr'], height=800, contrast=(0,100)):
 
         # load data
         dataset = os.path.splitext(os.path.basename(f))[0]  # get dataset name
-        data = np.load(f)
+        data = np.load(f, allow_pickle=True)
         X = data['X'][()]
 
         # restrict to requested channels, and borders only for y
