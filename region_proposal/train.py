@@ -14,6 +14,7 @@ from glob import glob
 
 if cfg.losswise_api_key:
     losswise.set_api_key(cfg.losswise_api_key)  # set up losswise.com visualization
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 # create model data generators
 train_generator = dg.DataGenerator(

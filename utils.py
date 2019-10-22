@@ -8,6 +8,8 @@ import tifffile
 from PIL import Image, ImageDraw, ImageFont
 from cellfie import config as cfg
 from scipy import signal
+import ipdb
+
 
 
 def get_frames(folder, frame_inds=0, frame_num=False):
@@ -138,8 +140,8 @@ def get_targets(folder, collapse_masks=False, centroid_radius=2, border_thicknes
 
     for i, cell in enumerate(cell_masks):
         masks_soma[i, cell[:, 0], cell[:, 1]] = True
-        # _, contour, _ = cv2.findContours(masks_soma[i].astype('uint8'), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        # masks_border[i] = cv2.drawContours(np.zeros(dimensions), contour, 0, 1, thickness=border_thickness).astype('bool')
+        contour = cv2.findContours(masks_soma[i].astype('uint8'), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        masks_border[i] = cv2.drawContours(np.zeros(dimensions), contour[0], 0, 1, thickness=border_thickness).astype('bool')
         center = np.mean(cell, 0).astype('int')
         masks_centroids[i] = cv2.circle(masks_centroids[i].astype('uint8'), (center[1], center[0]), centroid_radius, 1, thickness=-1)
 

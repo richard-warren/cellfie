@@ -31,6 +31,6 @@ losswise_api_key = '3ZGMSXASM'  # set to False if not using losswise.com
 batch_size = 64
 epoch_size = 4  # number of batches in an epoch
 training_epochs = 5000  # epochs
-early_stopping = 200  # epochs
+early_stopping = 100  # epochs
 save_predictions_during_training = True  # set whether to save images of predictions at each epoch end during training
 backprop_negative_masks = True  # whether to include negative examples in the backprop for segmentation
