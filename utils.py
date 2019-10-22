@@ -8,7 +8,6 @@ import tifffile
 from PIL import Image, ImageDraw, ImageFont
 from cellfie import config as cfg
 from scipy import signal
-import ipdb
 
 
 
