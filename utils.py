@@ -14,7 +14,7 @@ from scipy import signal
 def get_frames(folder, frame_inds=0, frame_num=False):
     """
     gets stack of images from folder containing tiff files // if frame_inds is given, these are the frames
-    included in stack // otherwise, frame_num evenly spaced images are returned in the stack
+    included in stack // otherwise, frame_num evenly spaced images are returned in the stackk
     """
 
     files = glob.glob(os.path.join(folder, '*.tif*'))  # works for .tif AND .tiff files
