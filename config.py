@@ -9,8 +9,8 @@ dice loss function
 
 # general
 data_dir = '/home/richard/Desktop/cellfie'
-parallelize = False  # whether to use parallel processing when creating summary images
-cores = 12  # how many CPU cores to use for parallel processess
+parallelize = True  # whether to use parallel processing when creating summary images
+cores = 12  # how many CPU cores to use for parallel processes
 use_curated_labels = True
 
 # prepare training data
@@ -19,4 +19,4 @@ datasets = ['K53']
 border_thickness = 2  # (pixels) thickness of borders for border labels
 centroid_radius = 2  # radius of circles at center of neuron mask in target
 summary_frames = 250  # number of frames per batch when computing summary images (1000)
-max_batches = 1 #e6  # max number of batches to use for computing summary images (1000)
+max_batches = 1e6  # max number of batches to use for computing summary images (1000)
