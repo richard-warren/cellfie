@@ -10,7 +10,7 @@ dice loss function
 # general
 data_dir = '/home/richard/Desktop/cellfie'
 parallelize = False  # whether to use parallel processing when creating summary images
-cores = 12  # how many CPU cores to use for parallel processes
+cores = 12  # how many CPU cores to use for parallel processess
 use_curated_labels = True
 
 # prepare training data
