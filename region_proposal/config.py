@@ -1,4 +1,4 @@
-# network
+ # network
 X_layers = ['corr', 'median', 'std']  # summary images to include as input to the network // ['corr', 'mean', 'median', 'max', 'std']
 y_layers = ['somas']  # summary images to include as target for the network // ['somas', 'borders', 'centroids']
 high_pass_sigma = 15  # std of gaussian based high pass filtering of inptus // set to False to turn off high pass filtering

@@ -54,6 +54,14 @@ callbacks = [
 if cfg.save_predictions_during_training:
     callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: save_prediction_imgs(test_generator, model, model_path)))
 
+
+# save model metadata
+metadata = {
+    'train_datasets': cfg.train_datasets,
+    'test_datasets': cfg.test_datasets,
+
+}
+
 if cfg.losswise_api_key:
     callbacks.append(LosswiseKerasCallback(tag='giterdone', display_interval=1))
 history = model.fit_generator(generator=train_generator, validation_data=test_generator,

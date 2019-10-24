@@ -9,6 +9,59 @@ import matplotlib.pyplot as plt
 import os
 
 
+class Cellfie(input_data, rp_model, is_model):
+
+    def __init__(self, input_data, rp_model, is_model):
+        self.input_data = input_data
+        self.rp_model = rp_model
+        self.is_model = is_model
+
+        # load data and models
+        print('%s: loading data and models...')
+        data = np.load(input_data, allow_pickle=True)['X'][()]
+        data_rp = np.stack([data[k] for k in rp_channels], axis=-1)
+        data_is = np.stack([data[k] for k in is_channels], axis=-1)
+        model_rp = load_model(rp_model_name)
+        model_is = load_model(is_model_name)
+        sub_size = model_is.input_shape[1:3]
+
+        # crop image if necessary
+        row = data_rp.shape[0] // 16 * 16 if (data_rp.shape[0] / 16) % 2 != 0 else data_rp.shape[0]
+        col = data_rp.shape[1] // 16 * 16 if (data_rp.shape[1] / 16) % 2 != 0 else data_rp.shape[1]
+        if (row, col) != data_rp.shape:
+            print('%s: cropping to dimensions: (%i, %i)...' % (dataset, row, col))
+            data_rp = data_rp[:row, :col]
+            data_is = data_is[:row, :col]
+
+        # get region proposals
+        print('%s: getting region proposals...' % dataset)
+        rp = model_rp.predict(np.expand_dims(data_rp, 0)).squeeze()
+        maxima = skimage.feature.peak_local_max(
+            rp, min_distance=min_distance, threshold_abs=maxima_thresh, indices=False)
+        maxima = skimage.measure.label(maxima, 8)
+        maxima = skimage.measure.regionprops(maxima)
+        centroids = np.array([m.centroid for m in maxima])
+
+        # perform instance segmentation at each maximum
+        print('%s: segmenting candidate neurons...' % dataset)
+        segmentations, scores, subframes = [], [], []
+
+        for m in tqdm(maxima):
+            position = (int(m.centroid[0] - sub_size[0] / 2),
+                        int(m.centroid[1] - sub_size[1] / 2),
+                        sub_size[0],
+                        sub_size[1])
+            subframe = utils.get_subimg(data_is, position, padding='median_local')
+            segmentation, score = model_is.predict(subframe[None, :, :, :])
+            segmentations.append(segmentation.squeeze())
+            scores.append(score[0][0])
+            subframes.append(subframe)
+
+
+
+
+
+
 def segment(dataset, rp_model_name, is_model_name, rp_channels, is_channels, maxima_thresh=.2, min_distance=4):
 
     # load data and models

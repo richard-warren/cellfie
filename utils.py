@@ -6,9 +6,13 @@ import json
 import cv2
 import tifffile
 from PIL import Image, ImageDraw, ImageFont
-from cellfie import config as cfg
 from scipy import signal
+import yaml
 
+
+# load configuration
+with open('config.yaml', 'r') as f:
+    cfg = yaml.safe_load(f)
 
 
 def get_frames(folder, frame_inds=0, frame_num=False):
@@ -227,20 +231,20 @@ def write_sample_imgs(X_contrast=(0,100)):
     '''writes sample images for training and test data for all .npz files in training_data folder'''
 
     print('writing sample summary images to disk...')
-    files = glob.glob(os.path.join(cfg.data_dir, 'training_data', '*.npz'))
+    files = glob.glob(os.path.join(cfg['data_dir'], 'training_data', '*.npz'))
 
     for f in files:
         data = np.load(f, allow_pickle=True)
         X_mat = np.stack(data['X'][()].values(), axis=2)
         y_mat = np.stack(data['y'][()].values(), axis=2)
-        file_name = os.path.join(cfg.data_dir, 'training_data', os.path.splitext(f)[0] + '.png')
+        file_name = os.path.join(cfg['data_dir'], 'training_data', os.path.splitext(f)[0] + '.png')
         save_prediction_img(file_name, X_mat, y_mat, X_contrast=X_contrast, column_titles=data['X'][()].keys())
 
 
 def write_sample_border_imgs(channels=['corr'], height=800, contrast=(0,100)):
 
     print('writing sample summary images with borders to disk...')
-    files = glob.glob(os.path.join(cfg.data_dir, 'training_data', '*.npz'))
+    files = glob.glob(os.path.join(cfg['data_dir'], 'training_data', '*.npz'))
 
     for f in files:
 
@@ -253,8 +257,8 @@ def write_sample_border_imgs(channels=['corr'], height=800, contrast=(0,100)):
         X = dict((k, X[k]) for k in channels)  # restrict to requested channels
         X = np.stack(X.values(), axis=2)
 
-        y = get_targets(os.path.join(cfg.data_dir, 'labels', dataset),
-                        border_thickness=1, collapse_masks=True, use_curated_labels=cfg.use_curated_labels)['borders']
+        y = get_targets(os.path.join(cfg['data_dir'], 'labels', dataset),
+                        border_thickness=1, collapse_masks=True, use_curated_labels=cfg['use_curated_labels'])['borders']
 
         # add borders
         img = np.zeros((y.shape[0], y.shape[1]*len(channels), 3))
@@ -262,7 +266,7 @@ def write_sample_border_imgs(channels=['corr'], height=800, contrast=(0,100)):
             temp = enhance_contrast(X[:,:,i], percentiles=contrast)
             img[:, i*(X.shape[1]):(i+1)*X.shape[1], :] = add_contours(temp, y)
 
-        file_name = os.path.join(cfg.data_dir, 'training_data', os.path.splitext(f)[0] + '_borders.png')
+        file_name = os.path.join(cfg['data_dir'], 'training_data', os.path.splitext(f)[0] + '_borders.png')
 
         img = Image.fromarray((img * 255).astype('uint8'))
         img = img.resize((int((img.width / img.height) * height), height), resample=Image.NEAREST)

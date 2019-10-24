@@ -1,4 +1,3 @@
-from cellfie import config as cfg
 from cellfie import utils
 import glob
 import numpy as np
@@ -6,6 +5,14 @@ import os
 from tqdm import tqdm
 import multiprocessing as mp
 import time
+import yaml
+
+
+# load configurations
+with open('config.yaml', 'r') as f:
+    cfg_global = yaml.safe_load(f)
+with open(os.path.join('prepare_training_data', 'config.yaml'), 'r') as f:
+    cfg = yaml.safe_load(f)
 
 
 def get_batch(b, batch_inds, summary_frames, folder):  # # batch, batch_inds, summary_frames, folder
@@ -23,23 +30,24 @@ def get_batch(b, batch_inds, summary_frames, folder):  # # batch, batch_inds, su
 
 
 if __name__ == '__main__':
-    for d in cfg.datasets:
+    for d in cfg['datasets']:
 
         # get summary images
-        folder = os.path.join(cfg.data_dir, 'datasets', 'images_' + d)
+        folder = os.path.join(cfg_global['data_dir'], 'datasets', 'images_' + d)
         total_frames = len(glob.glob(os.path.join(folder, '*.tif*')))
-        summary_frames = min(cfg.summary_frames,
+        print(cfg_global['data_dir'])
+        summary_frames = min(cfg['summary_frames'],
                              total_frames)  # make sure we don't look for more frames than exist in the dataset
         batch_inds = np.arange(0, total_frames, summary_frames)
-        batches = min(total_frames // summary_frames, cfg.max_batches)
+        batches = min(total_frames // summary_frames, cfg['max_batches'])
 
         print('preparing training data for %s... (%i batches)' % (d, batches))
         start_time = time.time()
 
         # get summary images
         # start_time = time.time()
-        if cfg.parallelize:
-            pool = mp.Pool(cfg.cores)
+        if cfg['parallelize']:
+            pool = mp.Pool(cfg['cores'])
             args = [(b, batch_inds, summary_frames, folder) for b in range(batches)]  # arguments for
             X_temp = pool.starmap(get_batch, args)
             X_temp = list(X_temp)
@@ -64,19 +72,20 @@ if __name__ == '__main__':
         X['std'] = utils.scale_img(np.max(X['std'], 0))
 
         # get targets
-        label_folder = os.path.join(cfg.data_dir, 'labels', d)
-        y = utils.get_targets(label_folder, collapse_masks=True, use_curated_labels=cfg.use_curated_labels,
-                              centroid_radius=cfg.centroid_radius, border_thickness=cfg.border_thickness)
+        label_folder = os.path.join(cfg_global['data_dir'], 'labels', d)
+        y = utils.get_targets(label_folder, collapse_masks=True, use_curated_labels=cfg_global['use_curated_labels'],
+                              centroid_radius=cfg['centroid_radius'], border_thickness=cfg['border_thickness'])
 
         # get tensor of masks for each individual neuron (used by segmentation network only)
-        neuron_masks = utils.get_targets(label_folder, collapse_masks=False, use_curated_labels=cfg.use_curated_labels)
+        neuron_masks = utils.get_targets(label_folder, collapse_masks=False, use_curated_labels=cfg_global['use_curated_labels'])
         neuron_masks = neuron_masks['somas']  # keep only the soma masks
 
         # store data for model training
-        training_data_folder = os.path.join(cfg.data_dir, 'training_data')
+        training_data_folder = os.path.join(cfg_global['data_dir'], 'training_data')
         if not os.path.exists(training_data_folder):
             os.makedirs(training_data_folder)
-        np.savez(os.path.join(training_data_folder, d), X=X, y=y, neuron_masks=neuron_masks)
+        np.savez(os.path.join(training_data_folder, d),
+                 X=X, y=y, neuron_masks=neuron_masks, cfg_global=cfg_global, cfg=cfg)
 
         print('%s finished in %.1f minutes' % (d, (time.time()-start_time)/60))
 
