@@ -1,5 +1,3 @@
-from cellfie.config import data_dir
-from cellfie.instance_segmentation import config as cfg
 from cellfie import utils
 from keras.utils import Sequence
 import numpy as np
@@ -7,6 +5,7 @@ import pandas as pd
 import os
 from scipy.ndimage.measurements import center_of_mass
 import cv2
+import yaml
 
 
 class DataGenerator(Sequence):
@@ -31,12 +30,18 @@ class DataGenerator(Sequence):
         self.negative_eg_distance = negative_eg_distance
         self.backprop_negative_masks = backprop_negative_masks
 
+        # load configurations
+        with open('config.yaml', 'r') as f:
+            cfg_global = yaml.safe_load(f)
+        with open(os.path.join('region_proposal', 'config.yaml'), 'r') as f:
+            cfg = yaml.safe_load(f)
+
         # load features and labels into DataFrame
         self.data = pd.DataFrame(index=datasets, columns=['X', 'y', 'negative_eg_inds'])
         for d in datasets:
 
-            data_sub = np.load(os.path.join(data_dir, 'training_data', d + '.npz'), allow_pickle=True)
-            X = np.stack([data_sub['X'][()][k] for k in cfg.X_layers], axis=2)
+            data_sub = np.load(os.path.join(cfg_global['data_dir'], 'training_data', d + '.npz'), allow_pickle=True)
+            X = np.stack([data_sub['X'][()][k] for k in cfg['X_layers']], axis=2)
             y = data_sub['neuron_masks']
 
             # get logical masks representing pixels where negative egs can be centered at
@@ -51,8 +56,9 @@ class DataGenerator(Sequence):
 
             self.data.loc[d, :] = (X, y, negative_eg_inds)
 
-        self.shape_X = (batch_size,) + subframe_size + (self.data.loc[datasets[0], 'X'].shape[-1],)  # batch size X height X width X depth
-        self.shape_y = (batch_size,) + subframe_size
+        self.shape_X = (batch_size, subframe_size[0], subframe_size[1], self.data.loc[datasets[0], 'X'].shape[-1])  # batch size X height X width X depth
+        self.shape_y = (batch_size, subframe_size[0], subframe_size[1])
+
 
     def __getitem__(self, index):
 
@@ -95,8 +101,8 @@ class DataGenerator(Sequence):
                 y_temp = np.zeros(self.subframe_size)
 
             if self.scaling:
-                X_temp = cv2.resize(X_temp, self.subframe_size)
-                y_temp = cv2.resize(y_temp.astype('uint8'), self.subframe_size).astype('bool')
+                X_temp = cv2.resize(X_temp, tuple(self.subframe_size))
+                y_temp = cv2.resize(y_temp.astype('uint8'), tuple(self.subframe_size)).astype('bool')
 
             # rotate
             if self.rotation:
