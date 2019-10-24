@@ -1,6 +1,5 @@
-from cellfie.config import data_dir
 from cellfie.utils import save_prediction_img
-from cellfie.region_proposal import config as cfg, data_generator as dg, models
+from cellfie.region_proposal import data_generator as dg, models
 from keras.models import load_model
 import tensorflow as tf
 import keras.backend as K
@@ -11,23 +10,32 @@ from datetime import datetime
 import os
 import pickle
 from glob import glob
+import yaml
+import shutil
 
-if cfg.losswise_api_key:
-    losswise.set_api_key(cfg.losswise_api_key)  # set up losswise.com visualization
+
+# load configurations
+with open('config.yaml', 'r') as f:
+    cfg_global = yaml.safe_load(f)
+with open(os.path.join('region_proposal', 'config.yaml'), 'r') as f:
+    cfg = yaml.safe_load(f)
+
+if cfg['losswise_api_key']:
+    losswise.set_api_key(cfg['losswise_api_key'])  # set up losswise.com visualization
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 # create model data generators
 train_generator = dg.DataGenerator(
-    cfg.train_datasets, batch_size=cfg.batch_size, subframe_size=cfg.subframe_size,
-    epoch_size=cfg.epoch_size, rotation=cfg.aug_rotation, scaling=cfg.aug_scaling)
+    cfg['train_datasets'], batch_size=cfg['batch_size'], subframe_size=cfg['subframe_size'],
+    epoch_size=cfg['epoch_size'], rotation=cfg['aug_rotation'], scaling=cfg['aug_scaling'])
 test_generator = dg.DataGenerator(
-    cfg.test_datasets, batch_size=cfg.batch_size, subframe_size=cfg.subframe_size,
-    epoch_size=cfg.epoch_size, rotation=cfg.aug_rotation, scaling=cfg.aug_scaling)
+    cfg['test_datasets'], batch_size=cfg['batch_size'], subframe_size=cfg['subframe_size'],
+    epoch_size=cfg['epoch_size'], rotation=cfg['aug_rotation'], scaling=cfg['aug_scaling'])
 
 # create model
 model = models.unet(
-    (None, None, train_generator.shape_X[-1]), train_generator.shape_y[-1], filters=cfg.filters,
-    lr_init=cfg.lr_init, batch_normalization=cfg.batch_normalization, high_pass_sigma=cfg.high_pass_sigma)
+    (None, None, train_generator.shape_X[-1]), train_generator.shape_y[-1], filters=cfg['filters'],
+    lr_init=cfg['lr_init'], batch_normalization=cfg['batch_normalization'], high_pass_sigma=cfg['high_pass_sigma'])
 
 
 # get predictions for single batch
@@ -40,32 +48,30 @@ def save_prediction_imgs(generator, model_in, folder):
 
 
 # train, omg!
-if cfg.use_cpu:
+if cfg['use_cpu']:
     config = tf.ConfigProto(device_count={'GPU': 0})
     sess = tf.Session(config=config)
     K.set_session(sess)
 
 model_folder = datetime.now().strftime('%y%m%d_%H.%M.%S')
-model_path = os.path.join(data_dir, 'models', 'region_proposal', model_folder)
+model_path = os.path.join(cfg_global['data_dir'], 'models', 'region_proposal', model_folder)
 os.makedirs(model_path)
 callbacks = [
-    EarlyStopping(patience=cfg.early_stopping, verbose=1),  # stop when validation loss stops increasing
+    EarlyStopping(patience=cfg['early_stopping'], verbose=1),  # stop when validation loss stops increasing
     ModelCheckpoint(os.path.join(model_path, '%s.{epoch:02d}-{val_loss:.6f}.hdf5' % model.name), save_best_only=True)]
-if cfg.save_predictions_during_training:
+if cfg['save_predictions_during_training']:
     callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: save_prediction_imgs(test_generator, model, model_path)))
 
 
 # save model metadata
-metadata = {
-    'train_datasets': cfg.train_datasets,
-    'test_datasets': cfg.test_datasets,
+shutil.copyfile('config.yaml', os.path.join(model_path, 'config_global.yaml'))
+shutil.copyfile(os.path.join('region_proposal', 'config.yaml'), os.path.join(model_path, 'config.yaml'))
 
-}
 
-if cfg.losswise_api_key:
+if cfg['losswise_api_key']:
     callbacks.append(LosswiseKerasCallback(tag='giterdone', display_interval=1))
 history = model.fit_generator(generator=train_generator, validation_data=test_generator,
-                              epochs=cfg.training_epochs, callbacks=callbacks)
+                              epochs=cfg['training_epochs'], callbacks=callbacks)
 
 with open(os.path.join(model_path, 'training_history'), 'wb') as training_file:
     pickle.dump(history.history, training_file)

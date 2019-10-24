@@ -1,10 +1,9 @@
-from cellfie.config import data_dir
-import cellfie.region_proposal.config as cfg
 from keras.utils import Sequence
 import numpy as np
 import pandas as pd
 import os
 import cv2
+import yaml
 import ipdb
 
 
@@ -17,8 +16,8 @@ class DataGenerator(Sequence):
 
     def __init__(self, datasets, batch_size=8, subframe_size=(100, 100), epoch_size=1,
                  rotation=True, scaling=(1, 1)):
-        # initialization
 
+        # initialization
         self.datasets = datasets
         self.batch_size = batch_size
         self.subframe_size = subframe_size
@@ -26,20 +25,26 @@ class DataGenerator(Sequence):
         self.rotation = rotation
         self.scaling = scaling
 
+        # load configurations
+        with open('config.yaml', 'r') as f:
+            cfg_global = yaml.safe_load(f)
+        with open(os.path.join('region_proposal', 'config.yaml'), 'r') as f:
+            cfg = yaml.safe_load(f)
+
         # load features and labels into DataFrame
         self.data = pd.DataFrame(index=datasets, columns=['X', 'y', 'corner_max'])
         for d in datasets:
 
-            data_sub = np.load(os.path.join(data_dir, 'training_data', d + '.npz'), allow_pickle=True)
-            _ = data_sub['X'][()][cfg.X_layers[0]]
+            data_sub = np.load(os.path.join(cfg_global['data_dir'], 'training_data', d + '.npz'), allow_pickle=True)
+            _ = data_sub['X'][()][cfg['X_layers'][0]]
             corner_max = (_.shape[0] - subframe_size[0],
                           _.shape[1] - subframe_size[1])  # subframe corner can be no further than corner_max
-            X = np.stack([data_sub['X'][()][k] for k in cfg.X_layers], axis=2)
-            y = np.stack([data_sub['y'][()][k] for k in cfg.y_layers], axis=2)
+            X = np.stack([data_sub['X'][()][k] for k in cfg['X_layers']], axis=2)
+            y = np.stack([data_sub['y'][()][k] for k in cfg['y_layers']], axis=2)
             self.data.loc[d, :] = (X, y, corner_max)
 
-        self.shape_X = (batch_size,) + subframe_size + (self.data.loc[datasets[0], 'X'].shape[-1],)  # batch size X height X width X depth
-        self.shape_y = (batch_size,) + subframe_size + (self.data.loc[datasets[0], 'y'].shape[-1],)
+        self.shape_X = (batch_size, subframe_size[0], subframe_size[1], self.data.loc[datasets[0], 'X'].shape[-1])  # batch size X height X width X depth
+        self.shape_y = (batch_size, subframe_size[0], subframe_size[1], self.data.loc[datasets[0], 'y'].shape[-1])
 
     def __getitem__(self, index):
 
