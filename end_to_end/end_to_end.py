@@ -1,4 +1,3 @@
-from cellfie import config as cfg
 from cellfie import utils
 import numpy as np
 from keras.models import load_model
@@ -7,44 +6,63 @@ import skimage.feature
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import os
+import ipdb
+import yaml
 
 
-class Cellfie(input_data, rp_model, is_model):
+class Cellfie:
 
-    def __init__(self, input_data, rp_model, is_model):
+    def __init__(self, input_data, rp_model, is_model,
+                 maxima_thresh=.1, min_distance=4):
+
+        os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
         self.input_data = input_data
         self.rp_model = rp_model
         self.is_model = is_model
 
-        # load data and models
-        print('%s: loading data and models...')
+        self.maxima_thresh = maxima_thresh  # for finding local maxima in region proposals
+        self.min_distance = min_distance
+
+        # load data
+        print('loading input data...')
         data = np.load(input_data, allow_pickle=True)['X'][()]
-        data_rp = np.stack([data[k] for k in rp_channels], axis=-1)
-        data_is = np.stack([data[k] for k in is_channels], axis=-1)
-        model_rp = load_model(rp_model_name)
-        model_is = load_model(is_model_name)
+
+        # load region proposal model
+        print('loading region proposal model...')
+        with open(os.path.join(os.path.split(rp_model)[0], 'config.yaml'), 'r') as f:
+            cfg = yaml.safe_load(f)
+        data_rp = np.stack([data[k] for k in cfg['X_layers']], axis=-1)
+        model_rp = load_model(rp_model)
+
+        # load instance segmentation model
+        print('loading instance segmentation model...')
+        with open(os.path.join(os.path.split(is_model)[0], 'config.yaml'), 'r') as f:
+            cfg = yaml.safe_load(f)
+        data_is = np.stack([data[k] for k in cfg['X_layers']], axis=-1)
+        model_is = load_model(is_model)
         sub_size = model_is.input_shape[1:3]
 
         # crop image if necessary
         row = data_rp.shape[0] // 16 * 16 if (data_rp.shape[0] / 16) % 2 != 0 else data_rp.shape[0]
         col = data_rp.shape[1] // 16 * 16 if (data_rp.shape[1] / 16) % 2 != 0 else data_rp.shape[1]
         if (row, col) != data_rp.shape:
-            print('%s: cropping to dimensions: (%i, %i)...' % (dataset, row, col))
+            print('cropping to dimensions: (%i, %i)...' % (row, col))
             data_rp = data_rp[:row, :col]
             data_is = data_is[:row, :col]
 
         # get region proposals
-        print('%s: getting region proposals...' % dataset)
-        rp = model_rp.predict(np.expand_dims(data_rp, 0)).squeeze()
+        print('getting region proposals...')
+        self.region_proposals = model_rp.predict(np.expand_dims(data_rp, 0)).squeeze()
         maxima = skimage.feature.peak_local_max(
-            rp, min_distance=min_distance, threshold_abs=maxima_thresh, indices=False)
+            self.region_proposals, min_distance=min_distance, threshold_abs=maxima_thresh, indices=False)
         maxima = skimage.measure.label(maxima, 8)
         maxima = skimage.measure.regionprops(maxima)
-        centroids = np.array([m.centroid for m in maxima])
+        self.centroids = np.array([m.centroid for m in maxima])
 
         # perform instance segmentation at each maximum
-        print('%s: segmenting candidate neurons...' % dataset)
-        segmentations, scores, subframes = [], [], []
+        print('segmenting candidate neurons...')
+        self.segmentations, self.scores, self.subframes = [], [], []
 
         for m in tqdm(maxima):
             position = (int(m.centroid[0] - sub_size[0] / 2),
@@ -53,62 +71,15 @@ class Cellfie(input_data, rp_model, is_model):
                         sub_size[1])
             subframe = utils.get_subimg(data_is, position, padding='median_local')
             segmentation, score = model_is.predict(subframe[None, :, :, :])
-            segmentations.append(segmentation.squeeze())
-            scores.append(score[0][0])
-            subframes.append(subframe)
+            self.segmentations.append(segmentation.squeeze())
+            self.scores.append(score[0][0])
+            self.subframes.append(subframe)
 
 
 
 
 
-
-def segment(dataset, rp_model_name, is_model_name, rp_channels, is_channels, maxima_thresh=.2, min_distance=4):
-
-    # load data and models
-    print('%s: loading data and models...' % dataset)
-    data = np.load(os.path.join(cfg.data_dir, 'training_data', dataset+'.npz'), allow_pickle=True)['X'][()]
-    data_rp = np.stack([data[k] for k in rp_channels], axis=-1)
-    data_is = np.stack([data[k] for k in is_channels], axis=-1)
-    model_rp = load_model(rp_model_name)
-    model_is = load_model(is_model_name)
-    sub_size = model_is.input_shape[1:3]
-
-    # crop image if necessary
-    row = data_rp.shape[0] // 16 * 16 if (data_rp.shape[0]/16)%2 != 0 else data_rp.shape[0]
-    col = data_rp.shape[1] // 16 * 16 if (data_rp.shape[1] / 16) % 2 != 0 else data_rp.shape[1]
-    if (row, col) != data_rp.shape:
-        print('%s: cropping to dimensions: (%i, %i)...' % (dataset, row, col))
-        data_rp = data_rp[:row, :col]
-        data_is = data_is[:row, :col]
-
-    # get region proposals
-    print('%s: getting region proposals...' % dataset)
-    rp = model_rp.predict(np.expand_dims(data_rp, 0)).squeeze()
-    maxima = skimage.feature.peak_local_max(
-        rp, min_distance=min_distance, threshold_abs=maxima_thresh, indices=False)
-    maxima = skimage.measure.label(maxima, 8)
-    maxima = skimage.measure.regionprops(maxima)
-    centroids = np.array([m.centroid for m in maxima])
-
-    # perform instance segmentation at each maximum
-    print('%s: segmenting candidate neurons...' % dataset)
-    segmentations, scores, subframes = [], [], []
-
-    for m in tqdm(maxima):
-        position = (int(m.centroid[0] - sub_size[0] / 2),
-                    int(m.centroid[1] - sub_size[1] / 2),
-                    sub_size[0],
-                    sub_size[1])
-        subframe = utils.get_subimg(data_is, position, padding='median_local')
-        segmentation, score = model_is.predict(subframe[None,:,:,:])
-        segmentations.append(segmentation.squeeze())
-        scores.append(score[0][0])
-        subframes.append(subframe)
-
-    return rp, segmentations, scores, centroids, data_rp, data_is, subframes
-
-
-
+##
 def plot_data(dataset, rp_model_name, is_model_name, rp_channels, is_channels,
               score_thresh=.2, maxima_thresh=.2, min_distance=4, use_mask=False, add_ground_truth=True):
 
@@ -180,25 +151,3 @@ def plot_data(dataset, rp_model_name, is_model_name, rp_channels, is_channels,
     plt.tight_layout()
 
     plt.savefig(os.path.join(cfg.data_dir, 'results', 'e2e_figs', dataset+'.png'))
-
-
-## the following code should be made into it's own script
-
-# # settings
-# maxima_thresh = .1  # for finding local maxima in region proposals
-# score_thresh = .3  # for instance segmentation classifier
-# min_distance = 4
-# use_mask = True
-# add_ground_truth = True
-#
-# rp_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\region_proposal\train_test_same\unet.988-0.124001.hdf5'  # train test same
-#
-# # is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fairsplit\segnet.54-0.362665.hdf5'  # fair split
-# is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame\segnet.96-0.265353.hdf5'  # train test same
-# # is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\traintestsame_noweights\segnet.94-0.217348.hdf5'  # train test same, no mask weights
-# # is_model_name = r'C:\Users\erica and rick\Desktop\cellfie\models\instance_segmentation\fairsplit_noweights\segnet.97-0.370941.hdf5'  # fair split, no mask weights
-#
-# for d in cfg.datasets:
-#     plot_data(d, rp_model_name, is_model_name, add_ground_truth=add_ground_truth,
-#               maxima_thresh=maxima_thresh, score_thresh=score_thresh, min_distance=min_distance, use_mask=use_mask)
-#
