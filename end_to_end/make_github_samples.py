@@ -3,7 +3,7 @@ make sample images for the github repo readme
 '''
 
 from cellfie import utils
-from cellfie.end_to_end.end_to_end import segment
+from cellfie.end_to_end.Cellfie import segment
 import numpy as np
 from PIL import Image
 from skimage.transform import resize, rescale
