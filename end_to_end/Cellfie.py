@@ -40,7 +40,6 @@ class Cellfie:
             cfg = yaml.safe_load(f)
         data_is = np.stack([self.data[k] for k in cfg['X_layers']], axis=-1)
 
-
         # crop image if necessary
         row = data_rp.shape[0] // 16 * 16 if (data_rp.shape[0] / 16) % 2 != 0 else data_rp.shape[0]
         col = data_rp.shape[1] // 16 * 16 if (data_rp.shape[1] / 16) % 2 != 0 else data_rp.shape[1]

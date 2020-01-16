@@ -24,6 +24,7 @@ maxima_thresh = .1  # for finding local maxima in region proposals
 min_distance = 4
 
 
+# todo: this code needs to be updated to reflect changes in the Cellfie class
 rp, segmentations, scores, centroids, data_rp, data_is, subframes = \
 segment(dataset, rp_model_name, is_model_name, channels, channels,
     min_distance=min_distance, maxima_thresh=maxima_thresh)

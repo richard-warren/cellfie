@@ -4,8 +4,11 @@ subframe_size: [48, 48]  # 40, 48, 64
 filters: 8  # try 8, 16, 32
 
 # training
-train_datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
-test_datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+#train_datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+#test_datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']
+train_datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.04.00.t', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.04.01']
+test_datasets: ['YST', 'nf.02.01', 'N.03.00.t']
+
 
 mask_weight: .5  # how much to weight mask vs classification loss during training
 fraction_positive_egs: .5  # fraction of training examples with an object in the center
@@ -20,7 +23,7 @@ batch_normalization: True
 losswise_api_key: 3ZGMSXASM  # set to False if not using losswise.com
 batch_size: 64
 epoch_size: 4  # number of batches in an epoch
-training_epochs: 5000  # epochs
-early_stopping: 5000  # epochs
+training_epochs: 2000  # epochs
+early_stopping: 2000   # epochs
 save_predictions_during_training: False  # set whether to save images of predictions at each epoch end during training
 backprop_negative_masks: True  # whether to include negative examples in the backprop for segmentation
