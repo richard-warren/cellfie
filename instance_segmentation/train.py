@@ -72,7 +72,7 @@ model_path = os.path.join(cfg_global['data_dir'], 'models', 'instance_segmentati
 os.makedirs(model_path)
 callbacks = [
     EarlyStopping(patience=cfg['early_stopping'], verbose=1),  # stop when validation loss stops increasing
-    ModelCheckpoint(os.path.join(model_path, '%s.{epoch:02d}-{val_loss:.6f}.hdf5' % model.name), save_best_only=True)]
+    ModelCheckpoint(os.path.join(model_path, '%s.{epoch:06d}-{val_loss:.6f}.hdf5' % model.name), save_best_only=True)]
 if cfg['save_predictions_during_training']:
     callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: save_prediction_imgs(test_generator, model, model_path)))
 
