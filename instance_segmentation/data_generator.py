@@ -1,5 +1,5 @@
 from cellfie import utils
-from keras.utils import Sequence
+from tensorflow.keras.utils import Sequence
 import numpy as np
 import pandas as pd
 import os

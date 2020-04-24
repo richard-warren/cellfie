@@ -9,7 +9,6 @@ filters: 8  # try 8, 16, 32
 train_datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.04.00.t', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.04.01']
 test_datasets: ['YST', 'nf.02.01', 'N.03.00.t']
 
-
 mask_weight: .5  # how much to weight mask vs classification loss during training
 fraction_positive_egs: .5  # fraction of training examples with an object in the center
 jitter: 2  # object can be jittered +-jitter relative to center
@@ -20,10 +19,10 @@ use_cpu: False  # whether to use CPU instead of GPU for training
 aug_rotation: True  # whether to apply 0, 90, 180, or 270 degree rotations randomly
 aug_scaling: [.8, 1.2]  # min and max image scaling // set to (1, 1) for no scaling
 batch_normalization: True
-losswise_api_key: 3ZGMSXASM  # set to False if not using losswise.com
+#losswise_api_key: J9133JBBA  # set to False if not using losswise.com
 batch_size: 64
 epoch_size: 4  # number of batches in an epoch
-training_epochs: 2000  # epochs
-early_stopping: 2000   # epochs
-save_predictions_during_training: False  # set whether to save images of predictions at each epoch end during training
+training_epochs: 1000  # epochs
+early_stopping: 1000   # epochs
+save_predictions_during_training: True  # set whether to save images of predictions at each epoch end during training
 backprop_negative_masks: True  # whether to include negative examples in the backprop for segmentation

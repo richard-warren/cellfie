@@ -1,11 +1,11 @@
 from cellfie.utils import save_prediction_img
 from cellfie.region_proposal import data_generator as dg, models
-from keras.models import load_model
 import tensorflow as tf
-import keras.backend as K
-from keras.callbacks import ModelCheckpoint, EarlyStopping, LambdaCallback
-import losswise
-from losswise.libs import LosswiseKerasCallback
+from tensorflow.keras.models import load_model
+import tensorflow.keras.backend as K
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, LambdaCallback
+# import losswise
+# from losswise.libs import LosswiseKerasCallback
 from datetime import datetime
 import os
 import pickle
@@ -20,8 +20,8 @@ with open('config.yaml', 'r') as f:
 with open(os.path.join('region_proposal', 'config.yaml'), 'r') as f:
     cfg = yaml.safe_load(f)
 
-if cfg['losswise_api_key']:
-    losswise.set_api_key(cfg['losswise_api_key'])  # set up losswise.com visualization
+# if cfg['losswise_api_key']:
+#     losswise.set_api_key(cfg['losswise_api_key'])  # set up losswise.com visualization
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 # create model data generators
@@ -68,8 +68,8 @@ shutil.copyfile('config.yaml', os.path.join(model_path, 'config_global.yaml'))
 shutil.copyfile(os.path.join('region_proposal', 'config.yaml'), os.path.join(model_path, 'config.yaml'))
 
 
-if cfg['losswise_api_key']:
-    callbacks.append(LosswiseKerasCallback(tag='giterdone', display_interval=1))
+# if cfg['losswise_api_key']:
+#     callbacks.append(LosswiseKerasCallback(tag='giterdone', display_interval=1))
 history = model.fit_generator(generator=train_generator, validation_data=test_generator,
                               epochs=cfg['training_epochs'], callbacks=callbacks)
 

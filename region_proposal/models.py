@@ -1,7 +1,7 @@
-from keras.models import Model
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, SpatialDropout2D,\
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, SpatialDropout2D,\
     concatenate, BatchNormalization, DepthwiseConv2D, Subtract
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 from scipy import signal
 import numpy as np
 
@@ -85,7 +85,7 @@ def unet(input_size, output_channels, filters=32, lr_init=.001, kernel_initializ
     lowpass_layer.trainable = False  # the weights should not change during training
 
     # compile
-    model = Model(input=inputs, output=conv10, name="unet")
+    model = Model(inputs=inputs, outputs=conv10, name="unet")
     model.compile(optimizer=Adam(lr=lr_init), loss='binary_crossentropy', metrics=['accuracy'])
     model.summary()
 

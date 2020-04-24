@@ -1,7 +1,7 @@
-from keras.models import Model
-from keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, SpatialDropout2D,\
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, SpatialDropout2D,\
     concatenate, BatchNormalization, Flatten, Dense
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 
 
 def segnet(input_size, filters=8, lr_init=.001, kernel_initializer='glorot_normal', batch_normalization=False,
@@ -72,7 +72,7 @@ def segnet(input_size, filters=8, lr_init=.001, kernel_initializer='glorot_norma
     is_neuron = Dense(1, activation='sigmoid', name='class')(fc2)
 
     # compile
-    model = Model(input=inputs, output=[mask, is_neuron], name='segnet')
+    model = Model(inputs=inputs, outputs=[mask, is_neuron], name='segnet')
     losses = {'mask': 'binary_crossentropy',
               'class': 'binary_crossentropy'}
     metrics = {'mask': [],

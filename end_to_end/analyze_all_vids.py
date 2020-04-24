@@ -6,10 +6,10 @@ import numpy as np
 
 
 # settings
-rp_model = '/home/richard/Desktop/eftych/cellfie_data/models/region_proposal/curated_noholdouts/unet.347-0.149786.hdf5'
-is_model = '/home/richard/Desktop/eftych/cellfie_data/models/instance_segmentation/curated_noholdouts/segnet.259-0.150646.hdf5'
+rp_model = r'E:\cellfie_data\models\region_proposal\200424_13.42.45\unet.000027-0.408449.hdf5'
+is_model = r'E:\cellfie_data\models\instance_segmentation\200424_13.50.17\segnet.001000-0.187542.hdf5'
 maxima_thresh = .1  # (0->1) in the region proposal network output, only maxima above maxima_thresh will be passed along to the instance segmentation network
-min_distance = 4  # only include maxima that are greater than min_distance pixels from one another
+min_distance = 4  # (pixels) only include maxima that are greater than min_distance pixels from one another
 
 
 with open('config.yaml') as f:

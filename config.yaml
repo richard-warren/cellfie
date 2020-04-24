@@ -1,3 +1,3 @@
-data_dir: /home/richard/Desktop/cellfie_data
+data_dir: E:\cellfie_data
 use_curated_labels: True  # this only affects how training data are prepared
 datasets: ['N.00.00', 'N.01.01', 'N.02.00', 'N.03.00.t', 'N.04.00.t', 'YST', 'K53', 'J115', 'J123', 'nf.01.00', 'nf.02.01', 'nf.04.01']  # all datasets

@@ -218,7 +218,7 @@ def save_prediction_img(file, X, y, y_pred=None, height=800, X_contrast=(0,100),
     img = Image.fromarray((cat * 255).astype('uint8'))
 
     if column_titles is not None:
-        font = ImageFont.truetype("FreeSansBold.ttf", 20)
+        font = ImageFont.truetype("arial.ttf", 20)
         img_draw = ImageDraw.Draw(img)
         for i, t in enumerate(column_titles):
             img_draw.text((X.shape[1] * i, 0), t, fill=255, font=font)
